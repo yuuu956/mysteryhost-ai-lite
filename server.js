@@ -6,6 +6,7 @@ import OpenAI from 'openai'
 import { buildHostSystemPrompt, buildHostUserPrompt } from './server/prompts/hostPrompt.js'
 import { buildReviewSystemPrompt, buildReviewUserPrompt } from './server/prompts/reviewPrompt.js'
 import { buildScriptGenerationSystemPrompt, buildScriptGenerationUserPrompt } from './server/prompts/scriptPrompt.js'
+import { decideHostAction, getAllowedDataForStage, buildAgentTrace } from './server/agents/hostAgent.js'
 
 dotenv.config()
 
@@ -279,6 +280,35 @@ app.get('/api/health', (req, res) => {
   res.json({
     ok: true,
     message: 'MysteryHost AI Lite backend is running.',
+  })
+})
+
+app.post('/api/agent-decision', (req, res) => {
+  const {
+    userAction,
+    currentRound = 1,
+    maxRound = 3,
+    stage = 'qa',
+  } = req.body
+
+  const actionDecision = decideHostAction({
+    userAction,
+    currentRound,
+    maxRound,
+  })
+
+  const permissions = getAllowedDataForStage(stage)
+
+  const agentTrace = buildAgentTrace({
+    actionDecision,
+    stage,
+    safetyResult: null,
+  })
+
+  res.json({
+    decision: actionDecision,
+    permissions,
+    trace: agentTrace,
   })
 })
 
