@@ -181,53 +181,63 @@ mysteryhost-ai-lite/
 ---
 
 ## 9. 当前版本
-### V0.3 AI Review and Spoiler Safety
 
-当前版本已经在 V0.2 DeepSeek API 主持人问答基础上，新增 AI 推理复盘和防剧透安全检测能力。
+### V0.4 Agent and Script Generation
+
+当前版本已经在 V0.3 AI 推理复盘和防剧透安全检测基础上，新增 Prompt 模块化、Agent Controller 和剧本生成接口。
 
 已完成：
 
-* React + Vite 项目初始化
-* 暗黑悬疑风 Dashboard 页面
-* 案件背景渲染
-* 角色卡渲染
-* 分轮线索释放
-* 本地 Express 后端服务
-* DeepSeek API 接入
-* `/api/health` 后端健康检查接口
-* `/api/host-chat` AI 主持人问答接口
-* `/api/review-reasoning` AI 推理复盘接口
-* 前端主持人问答模块调用后端 API
-* 前端推理复盘模块调用后端 API
-* 主持人回答防剧透检测
-* 模型复盘 JSON 解析
-* 模型复盘质量校验
-* 模型异常时自动回退到本地规则复盘
-* API 调用失败时自动回退到本地规则回答
-* `.env.example` 环境变量示例文件
-* `.gitignore` 保护真实 `.env`
-* GitHub Pages 在线部署
-* v0.1.0、v0.2.0、v0.3.0 GitHub Release
+- React + Vite 项目初始化
+- 暗黑悬疑风 Dashboard 页面
+- 案件背景渲染
+- 角色卡渲染
+- 分轮线索释放
+- 本地 Express 后端服务
+- DeepSeek API 接入
+- `/api/health` 后端健康检查接口
+- `/api/host-chat` AI 主持人问答接口
+- `/api/review-reasoning` AI 推理复盘接口
+- `/api/generate-script` AI 剧本生成接口
+- `/api/agent-decision` Agent 决策测试接口
+- 前端主持人问答模块调用后端 API
+- 前端推理复盘模块调用后端 API
+- 主持人回答防剧透检测
+- 模型复盘 JSON 解析
+- 模型复盘质量校验
+- 模型异常时自动回退到本地规则复盘
+- Prompt 模块化：Host / Review / Script Generation
+- Agent Controller：用户动作识别、工具选择、权限边界
+- 剧本生成一致性检查：凶手必须来自角色列表
+- API 调用失败时自动回退到本地规则回答
+- `.env.example` 环境变量示例文件
+- `.gitignore` 保护真实 `.env`
+- GitHub Pages 在线部署
+- v0.1.0、v0.2.0、v0.3.0、v0.4.0 GitHub Release
 
 说明：
 
 GitHub Pages 是静态部署环境，不包含本地 Express 后端。因此线上 Demo 可以正常展示页面，并在无法连接本地后端时使用 fallback 兜底逻辑。
 
-如果要体验真实 DeepSeek AI 主持人和 AI 推理复盘，需要在本地同时运行：
+如果要体验真实 DeepSeek AI 主持人、AI 推理复盘、剧本生成接口和 Agent Controller，需要在本地同时运行：
 
 ```powershell
 npm.cmd run server
 npm.cmd run dev
 ```
+
 ---
 
 ## 10. 后续规划
-### V0.4 多模态扩展版
 
-* 增加角色头像
-* 增加案件封面图
-* 增加语音主持人
-* 增加可分享推理报告
+### V0.5 前端剧本生成版
+
+- 将 `/api/generate-script` 接入前端页面
+- 支持用户输入主题、人数和难度
+- 支持一键生成新案件
+- 支持将生成结果替换当前案件数据
+- 增加 Agent 执行轨迹可视化
+- 增加 AI 状态标签，例如“DeepSeek 已接入 / fallback 已触发”
 
 ---
 
