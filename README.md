@@ -159,6 +159,7 @@ mysteryhost-ai-lite/
 | ---------------------------------------- | ---------------------------- |
 | [学习路线](./docs/learning-roadmap.md)       | 记录本项目对应的 AI 产品经理学习路径         |
 | [产品需求文档](./docs/product-requirements.md) | 记录产品定位、用户场景、MVP 范围和版本规划      |
+| [本地运行说明](./docs/local-development.md) | 说明如何在本地运行 DeepSeek 后端版本，包括环境变量、前后端启动和常见问题 |
 | [Prompt 设计文档](./docs/prompt-design.md)   | 记录剧本生成、主持人问答、推理复盘的 Prompt 设计 |
 | [状态管理设计](./docs/state-design.md)         | 记录游戏状态、上下文记忆和防剧透状态控制         |
 | [Agent 工作流设计](./docs/agent-workflow.md)  | 记录主持人 Agent、工具调用和工作流设计       |
