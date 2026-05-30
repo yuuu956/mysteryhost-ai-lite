@@ -2,59 +2,237 @@
 
 MysteryHost AI Lite 是一个文字版 AI 剧本杀主持人原型项目。
 
-它用于探索 AI 如何在互动推理游戏中扮演主持人角色，完成案件背景展示、角色分配、线索释放、玩家提问回应和最终推理复盘。
+本项目用于探索 AI 如何在互动推理游戏中扮演主持人角色，完成案件背景展示、角色分配、线索释放、玩家提问回应和最终推理复盘。
 
-我会在实现项目的过程中，系统学习并整理 AI 产品经理需要掌握的核心能力，包括 LLM、Prompt Engineering、结构化输出、状态管理、Agent 工作流、AI 评测和风险控制。
+本项目同时也是我的 AI 产品经理学习作品集。我在实现项目的过程中，系统学习并整理 AI 产品经理需要掌握的核心能力，包括 LLM、Prompt Engineering、Structured Output、Memory、Agent Workflow、Tool Use、AI Evaluation 和 Risk Control。
 
-## Project Goals
+---
 
-- 搭建一个可运行的 AI 剧本杀主持人文字版 Demo
-- 理解 AI 产品经理的核心工作方法
-- 学习如何把 AI 能力转化为具体产品功能
-- 沉淀完整的 GitHub 项目文档和学习笔记
-- 为后续 AI 产品经理求职积累作品集项目
+## 1. 项目简介
 
-## MVP Features
+MysteryHost AI Lite 是一个文字版 AI 剧本杀主持人 Demo。
 
-第一版 MVP 包含以下功能：
+它模拟剧本杀主持人的核心职责，包括：
 
-1. 案件背景展示
-2. 角色卡展示
-3. 分轮线索释放
-4. 主持人问答区
-5. 玩家推理复盘区
+* 展示案件背景
+* 分配角色卡
+* 按回合释放线索
+* 回答玩家问题
+* 防止提前剧透
+* 分析玩家最终推理
+* 生成推理复盘结果
 
-## AI Capabilities
+当前 MVP 版本使用本地 mock 数据和规则逻辑模拟 AI 能力。后续版本可以进一步接入 LLM API、结构化 Prompt 和 Agent 工作流。
 
-本项目计划覆盖以下 AI 产品能力：
+---
 
-- LLM 应用设计
-- Prompt Engineering
-- Structured Output
-- Game State Memory
-- Agent Workflow
-- Simulated Tool Use
-- Spoiler Control
-- AI Evaluation
+## 2. 为什么做这个项目？
 
-## Tech Stack
+本项目的目标不是单纯做一个“故事生成器”，而是通过一个可运行的 AI 产品原型，学习 AI 产品经理的核心能力。
 
-- React
-- Vite
-- JavaScript
-- Local JSON Mock Data
-- Markdown Documentation
+学习路径如下：
 
-## Project Structure
+```text
+AI 概念学习
+→ 产品经理视角理解
+→ 功能设计
+→ Demo 实现
+→ GitHub 文档沉淀
+→ 面试项目表达
+```
+
+MysteryHost AI Lite 的重点不是让 AI 随机生成悬疑故事，而是探索：
+
+> AI 如何在一个有规则、有阶段、有信息权限、有风险控制的互动产品中承担功能型角色。
+
+---
+
+## 3. MVP 核心功能
+
+当前版本已经实现以下功能：
+
+| 功能模块    | 功能说明                             |
+| ------- | -------------------------------- |
+| 案件背景展示  | 展示案件标题、主题、死者信息、案发地点和核心谜题         |
+| 角色卡展示   | 展示角色身份、公开信息、隐藏秘密、人物关系和可疑点        |
+| 分轮线索释放  | 按 Round 1、Round 2、Round 3 逐步释放线索 |
+| 主持人问答   | 玩家可以向主持人提问，系统会基于当前信息进行不剧透回应      |
+| 推理复盘    | 玩家提交最终推理后，系统输出评分、遗漏点和最终真相        |
+| 暗黑悬疑风界面 | 使用深色 Dashboard 风格呈现推理体验          |
+
+---
+
+## 4. AI 能力映射
+
+| AI 能力              | 当前 MVP 实现方式   | 后续升级方向                 |
+| ------------------ | ------------- | ---------------------- |
+| LLM                | 使用本地规则模拟      | 接入 LLM API，实现动态生成      |
+| Prompt Engineering | 已整理 Prompt 模板 | 用于真实 API 调用            |
+| Structured Output  | 使用本地结构化 JS 数据 | 要求 LLM 输出 JSON         |
+| Memory             | React 状态和聊天记录 | 构建完整 gameState         |
+| Agent Workflow     | 使用手动状态流程模拟    | 增加主持人 Agent Controller |
+| Tool Use           | 使用本地函数模拟工具    | 实现工具调用式工作流             |
+| Risk Control       | 使用规则防剧透       | 增加输出校验和剧透检查            |
+| Evaluation         | 已设计评测指标和测试用例  | 后续增加自动化测试              |
+
+---
+
+## 5. 产品体验流程
+
+```text
+用户进入页面
+→ 阅读案件背景
+→ 查看角色卡
+→ 查看第一轮线索
+→ 向 AI 主持人提问
+→ 释放更多线索
+→ 提交最终推理
+→ 获得推理评分、遗漏点和最终真相
+```
+
+---
+
+## 6. 技术栈
+
+* React
+* Vite
+* JavaScript
+* 本地 JS mock 数据
+* Markdown 项目文档
+* GitHub 作品集结构
+
+---
+
+## 7. 项目结构
 
 ```text
 mysteryhost-ai-lite/
 ├── docs/
+│   ├── learning-roadmap.md
+│   ├── product-requirements.md
+│   ├── prompt-design.md
+│   ├── state-design.md
+│   ├── agent-workflow.md
+│   ├── evaluation-metrics.md
+│   └── risk-control.md
+│
 ├── learning-notes/
-├── assets/
+│   ├── 01-ai-product-manager-basics.md
+│   ├── 02-llm-basics.md
+│   ├── 03-prompt-engineering.md
+│   ├── 04-structured-output.md
+│   ├── 05-memory-and-state-management.md
+│   ├── 06-agent-and-tool-use.md
+│   └── 07-ai-evaluation-and-risk-control.md
+│
 ├── src/
-│   ├── components/
 │   ├── data/
+│   │   └── mysteryCase.js
 │   ├── prompts/
-│   └── styles/
+│   │   ├── host-prompt.md
+│   │   ├── review-prompt.md
+│   │   └── script-generation-prompt.md
+│   ├── App.jsx
+│   ├── App.css
+│   └── index.css
+│
 └── README.md
+```
+
+---
+
+## 8. 项目文档
+
+### 产品与 AI 设计文档
+
+| 文档                                       | 内容说明                         |
+| ---------------------------------------- | ---------------------------- |
+| [学习路线](./docs/learning-roadmap.md)       | 记录本项目对应的 AI 产品经理学习路径         |
+| [产品需求文档](./docs/product-requirements.md) | 记录产品定位、用户场景、MVP 范围和版本规划      |
+| [Prompt 设计文档](./docs/prompt-design.md)   | 记录剧本生成、主持人问答、推理复盘的 Prompt 设计 |
+| [状态管理设计](./docs/state-design.md)         | 记录游戏状态、上下文记忆和防剧透状态控制         |
+| [Agent 工作流设计](./docs/agent-workflow.md)  | 记录主持人 Agent、工具调用和工作流设计       |
+| [AI 评测指标](./docs/evaluation-metrics.md)  | 记录 AI 输出质量、产品体验和测试用例         |
+| [风险控制文档](./docs/risk-control.md)         | 记录防剧透、防幻觉、流程控制和格式校验策略        |
+
+### AI 产品经理学习笔记
+
+| 学习笔记                                                                                       | 主题                               |
+| ------------------------------------------------------------------------------------------ | -------------------------------- |
+| [01 AI 产品经理基础](./learning-notes/01-ai-product-manager-basics.md)                           | AI 产品经理职责、能力模型和产品思维              |
+| [02 LLM 基础](./learning-notes/02-llm-basics.md)                                             | LLM、Token、Context Window、幻觉和模型边界 |
+| [03 Prompt Engineering](./learning-notes/03-prompt-engineering.md)                         | 角色、任务、上下文、约束和输出格式                |
+| [04 Structured Output](./learning-notes/04-structured-output.md)                           | JSON、卡片渲染、字段校验和前端映射              |
+| [05 Memory and State Management](./learning-notes/05-memory-and-state-management.md)       | 游戏状态、短期记忆和上下文控制                  |
+| [06 Agent and Tool Use](./learning-notes/06-agent-and-tool-use.md)                         | Agent 工作流、Function Calling 和模拟工具 |
+| [07 AI Evaluation and Risk Control](./learning-notes/07-ai-evaluation-and-risk-control.md) | AI 评测指标、幻觉控制和防剧透机制               |
+
+---
+
+## 9. 当前版本
+
+### V0.1 静态交互 MVP
+
+已完成：
+
+* React + Vite 项目初始化
+* 暗黑悬疑风 Dashboard 页面
+* 案件背景渲染
+* 角色卡渲染
+* 分轮线索释放
+* 本地规则版主持人问答
+* 本地规则版推理复盘
+* 产品需求文档
+* Prompt 设计文档
+* 状态管理设计文档
+* Agent 工作流设计文档
+* AI 评测与风险控制文档
+* AI 产品经理学习笔记
+
+---
+
+## 10. 后续规划
+
+### V0.2 LLM 增强版
+
+* 接入 LLM API
+* 使用主持人问答 Prompt 生成动态回应
+* 使用推理复盘 Prompt 生成分析结果
+* 使用结构化 JSON 输出
+* 增加输出格式校验
+
+### V0.3 Agent 工作流版
+
+* 增加 Host Agent Controller
+* 将本地函数拆分为工具模块
+* 增加防剧透检查工具
+* 增加线索一致性检查工具
+* 增加 gameState 构建器
+
+### V0.4 多模态扩展版
+
+* 增加角色头像
+* 增加案件封面图
+* 增加语音主持人
+* 增加可分享推理报告
+
+---
+
+## 11. 作品集价值
+
+本项目展示了以下 AI 产品经理能力：
+
+* AI 产品定位
+* 用户场景设计
+* MVP 功能优先级判断
+* Prompt 设计
+* 结构化输出设计
+* 状态管理和上下文控制
+* Agent 工作流思维
+* AI 评测指标设计
+* 风险控制策略
+* GitHub 项目文档沉淀
+
+本项目的核心学习结论是：
+
+> AI 产品不是简单接入一个大模型，而是需要明确的场景、结构化输入输出、状态管理、流程设计、评测体系和风险控制，才能形成真正可用的产品体验。
