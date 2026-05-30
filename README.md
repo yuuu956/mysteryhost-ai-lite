@@ -1,5 +1,13 @@
 # MysteryHost AI Lite
 
+## 在线访问
+
+* GitHub 仓库：https://github.com/yuuu956/mysteryhost-ai-lite
+* 在线 Demo：https://yuuu956.github.io/mysteryhost-ai-lite/
+
+
+
+
 MysteryHost AI Lite 是一个文字版 AI 剧本杀主持人原型项目。
 
 本项目用于探索 AI 如何在互动推理游戏中扮演主持人角色，完成案件背景展示、角色分配、线索释放、玩家提问回应和最终推理复盘。
