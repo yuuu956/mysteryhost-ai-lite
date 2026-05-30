@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { mysteryCase, characters, clues, truth } from './data/mysteryCase'
 import { askAIHost } from './api/hostApi'
+import { reviewReasoningWithAI } from './api/reviewApi'
 import './App.css'
 
 function App() {
@@ -91,15 +92,48 @@ function App() {
     ])
   }
 
-  const handleReviewReasoning = () => {
+  const handleReviewReasoning = async () => {
     if (!reasoning.trim()) return
-  
+
     const userReasoning = reasoning.trim()
-  
+
+    try {
+      const aiReview = await reviewReasoningWithAI({
+        playerReasoning: userReasoning,
+        truth,
+        clues,
+      })
+
+      setReviewResult({
+        score: aiReview.score,
+        level: aiReview.level,
+        mentionsMurderer:
+          aiReview.hitPoints?.some((point) => point.includes('凶手')) ||
+          userReasoning.includes(truth.murderer),
+        matchedEvidence:
+          aiReview.evidenceAnalysis
+            ?.filter((item) => item.usedByPlayer)
+            .map((item) => item.evidence) || [],
+        missedPoints: aiReview.missedPoints || [],
+        truthSummary:
+          aiReview.truthSummary ||
+          `最终真相：凶手是${truth.murderer}。${truth.motive}${truth.method}`,
+        summary: aiReview.summary,
+        hitPoints: aiReview.hitPoints || [],
+        evidenceAnalysis: aiReview.evidenceAnalysis || [],
+        fallbackUsed: aiReview.fallbackUsed || false,
+        fallbackReason: aiReview.fallbackReason || null,
+      })
+
+      return
+    } catch (error) {
+      console.error('AI review failed, fallback to local rules:', error)
+    }
+
     const matchedEvidence = truth.keyEvidence.filter((evidence) =>
       userReasoning.includes(evidence.slice(0, 4))
     )
-  
+
     const mentionsMurderer = userReasoning.includes(truth.murderer)
     const mentionsMotive =
       userReasoning.includes('报销') ||
@@ -113,14 +147,14 @@ function App() {
       userReasoning.includes('消防通道') ||
       userReasoning.includes('纤维') ||
       userReasoning.includes('墨水')
-  
+
     const score =
       (mentionsMurderer ? 30 : 0) +
       (mentionsMotive ? 20 : 0) +
       (mentionsTimeline ? 20 : 0) +
       (mentionsScene ? 20 : 0) +
       Math.min(matchedEvidence.length * 5, 10)
-  
+
     let level = '推理仍不完整'
     if (score >= 80) {
       level = '接近真相'
@@ -129,32 +163,34 @@ function App() {
     } else if (score >= 30) {
       level = '发现了部分关键点'
     }
-  
+
     const missedPoints = []
-  
+
     if (!mentionsMurderer) {
       missedPoints.push('你还没有明确指出真正的凶手。')
     }
-  
+
     if (!mentionsMotive) {
       missedPoints.push('你没有充分解释财务报销、举报邮件和作案动机之间的关系。')
     }
-  
+
     if (!mentionsTimeline) {
       missedPoints.push('你还需要分析监控中断和签到记录被修改的问题。')
     }
-  
+
     if (!mentionsScene) {
       missedPoints.push('你忽略了消防通道纤维、墨水痕迹等现场证据。')
     }
-  
+
     setReviewResult({
       score,
       level,
       mentionsMurderer,
       matchedEvidence,
       missedPoints,
-      truthSummary: `最终真相：凶手是${truth.murderer}。${truth.motive}${truth.method}`
+      truthSummary: `最终真相：凶手是${truth.murderer}。${truth.motive}${truth.method}`,
+      fallbackUsed: true,
+      fallbackReason: 'frontend_local_fallback',
     })
   }
 
