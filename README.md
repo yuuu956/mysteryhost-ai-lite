@@ -181,7 +181,9 @@ mysteryhost-ai-lite/
 
 ## 9. 当前版本
 
-### V0.1 静态交互 MVP
+### V0.2 DeepSeek API Integration
+
+当前版本已经在 V0.1 静态交互 MVP 基础上，新增真实 LLM API 调用能力。
 
 已完成：
 
@@ -192,24 +194,30 @@ mysteryhost-ai-lite/
 * 分轮线索释放
 * 本地规则版主持人问答
 * 本地规则版推理复盘
-* 产品需求文档
-* Prompt 设计文档
-* 状态管理设计文档
-* Agent 工作流设计文档
-* AI 评测与风险控制文档
-* AI 产品经理学习笔记
+* 本地 Express 后端服务
+* DeepSeek API 接入
+* `/api/health` 后端健康检查接口
+* `/api/host-chat` AI 主持人问答接口
+* 前端主持人问答模块调用后端 API
+* API 调用失败时自动回退到本地规则回答
+* `.env.example` 环境变量示例文件
+* `.gitignore` 保护真实 `.env`
+* GitHub Pages 在线部署
+* v0.1.0 和 v0.2.0 GitHub Release
 
+说明：
+
+GitHub Pages 是静态部署环境，不包含本地 Express 后端。因此线上 Demo 可以正常展示页面，并在无法连接本地后端时使用 fallback 兜底逻辑。
+
+如果要体验真实 DeepSeek AI 主持人，需要在本地同时运行：
+
+```powershell
+npm.cmd run server
+npm.cmd run dev
+```
 ---
 
 ## 10. 后续规划
-
-### V0.2 LLM 增强版
-
-* 接入 LLM API
-* 使用主持人问答 Prompt 生成动态回应
-* 使用推理复盘 Prompt 生成分析结果
-* 使用结构化 JSON 输出
-* 增加输出格式校验
 
 ### V0.3 Agent 工作流版
 
