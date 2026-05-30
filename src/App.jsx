@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { mysteryCase, characters, clues, truth } from './data/mysteryCase'
+import { askAIHost } from './api/hostApi'
 import './App.css'
 
 function App() {
@@ -23,61 +24,71 @@ function App() {
     }
   }
 
-  const handleAskHost = () => {
+  const handleAskHost = async () => {
     if (!question.trim()) return
   
     const playerQuestion = question.trim()
+    setQuestion('')
   
     let hostReply =
       '这个问题目前还不能直接回答。请结合已经释放的线索继续推理，尤其注意时间线、人物动机和现场痕迹之间的矛盾。'
   
-    if (playerQuestion.includes('死者') || playerQuestion.includes('许言')) {
-      hostReply =
-        '关于死者许言，目前可以确认：他正在调查学生会异常报销问题，并且案发前曾接触过关键财务文件。更多死亡细节需要结合后续线索判断。'
+    try {
+      hostReply = await askAIHost({
+        caseBackground: mysteryCase,
+        currentRound,
+        releasedClues,
+        playerQuestion,
+      })
+    } catch (error) {
+      console.error('AI host failed, fallback to local rules:', error)
+  
+      if (playerQuestion.includes('死者') || playerQuestion.includes('许言')) {
+        hostReply =
+          '关于死者许言，目前可以确认：他正在调查学生会异常报销问题，并且案发前曾接触过关键财务文件。更多死亡细节需要结合后续线索判断。'
+      }
+  
+      if (playerQuestion.includes('现场') || playerQuestion.includes('图书馆')) {
+        hostReply =
+          '案发现场位于旧图书馆三楼档案室外。门窗没有明显破坏痕迹，但地面脚印、钢笔墨水和消防通道附近的痕迹都值得重点关注。'
+      }
+  
+      if (playerQuestion.includes('林舟')) {
+        hostReply =
+          '林舟有经济方面的动机，他和死者之间存在学生会经费问题。但目前的线索还不足以直接证明他就是凶手。'
+      }
+  
+      if (playerQuestion.includes('沈念')) {
+        hostReply =
+          '沈念是案发前最后见过死者的人之一，并且掌握部分财务文件信息。她的证词需要和邮件草稿、档案记录一起分析。'
+      }
+  
+      if (playerQuestion.includes('周遥')) {
+        hostReply =
+          '周遥具备干扰系统和修改记录的能力，但这并不等于他一定亲自作案。你需要判断他是主动参与，还是被他人利用。'
+      }
+  
+      if (playerQuestion.includes('凶手') || playerQuestion.includes('真相')) {
+        hostReply =
+          '现在还不能直接确认凶手。作为主持人，我只能提醒你：不要只看表面动机，也要关注谁有机会修改时间线和转移嫌疑。'
+      }
+  
+      if (currentRound < 3) {
+        hostReply += ' 当前仍处于线索释放阶段，请注意：部分关键信息尚未公开。'
+      }
     }
   
-    if (playerQuestion.includes('现场') || playerQuestion.includes('图书馆')) {
-      hostReply =
-        '案发现场位于旧图书馆三楼档案室外。门窗没有明显破坏痕迹，但地面脚印、钢笔墨水和消防通道附近的痕迹都值得重点关注。'
-    }
-  
-    if (playerQuestion.includes('林舟')) {
-      hostReply =
-        '林舟有经济方面的动机，他和死者之间存在学生会经费问题。但目前的线索还不足以直接证明他就是凶手。'
-    }
-  
-    if (playerQuestion.includes('沈念')) {
-      hostReply =
-        '沈念是案发前最后见过死者的人之一，并且掌握部分财务文件信息。她的证词需要和邮件草稿、档案记录一起分析。'
-    }
-  
-    if (playerQuestion.includes('周遥')) {
-      hostReply =
-        '周遥具备干扰系统和修改记录的能力，但这并不等于他一定亲自作案。你需要判断他是主动参与，还是被他人利用。'
-    }
-  
-    if (playerQuestion.includes('凶手') || playerQuestion.includes('真相')) {
-      hostReply =
-        '现在还不能直接确认凶手。作为主持人，我只能提醒你：不要只看表面动机，也要关注谁有机会修改时间线和转移嫌疑。'
-    }
-  
-    if (currentRound < 3) {
-      hostReply += ' 当前仍处于线索释放阶段，请注意：部分关键信息尚未公开。'
-    }
-  
-    setHostMessages([
-      ...hostMessages,
+    setHostMessages((prevMessages) => [
+      ...prevMessages,
       {
         role: 'player',
-        content: playerQuestion
+        content: playerQuestion,
       },
       {
         role: 'host',
-        content: hostReply
-      }
+        content: hostReply,
+      },
     ])
-  
-    setQuestion('')
   }
 
   const handleReviewReasoning = () => {
