@@ -2,10 +2,12 @@
 
 ## 在线访问
 
-* GitHub 仓库：https://github.com/yuuu956/mysteryhost-ai-lite
-* 在线 Demo：https://yuuu956.github.io/mysteryhost-ai-lite/
+- GitHub 仓库：https://github.com/yuuu956/mysteryhost-ai-lite
+- 在线 Demo：https://yuuu956.github.io/mysteryhost-ai-lite/
 
+## 项目截图
 
+![MysteryHost AI Lite Demo](./assets/screenshots/demo-homepage.png)
 
 
 MysteryHost AI Lite 是一个文字版 AI 剧本杀主持人原型项目。
