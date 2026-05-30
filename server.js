@@ -3,6 +3,9 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import OpenAI from 'openai'
+import { buildHostSystemPrompt, buildHostUserPrompt } from './server/prompts/hostPrompt.js'
+import { buildReviewSystemPrompt, buildReviewUserPrompt } from './server/prompts/reviewPrompt.js'
+import { buildScriptGenerationSystemPrompt, buildScriptGenerationUserPrompt } from './server/prompts/scriptPrompt.js'
 
 dotenv.config()
 
@@ -303,37 +306,14 @@ app.post('/api/host-chat', async (req, res) => {
 
     const deepseek = createDeepSeekClient()
 
-    const systemPrompt = `
-你是一个文字版剧本杀游戏的 AI 主持人。
+    const systemPrompt = buildHostSystemPrompt()
 
-你的任务是根据当前案件信息、当前回合、已释放线索和玩家问题，生成一段主持人回答。
-
-你必须遵守以下规则：
-1. 只能基于当前案件信息和已释放线索回答。
-2. 不得使用尚未释放的线索。
-3. 不得提前透露最终凶手。
-4. 不得提前透露完整真相。
-5. 不得编造当前剧本中不存在的新线索。
-6. 如果玩家询问“凶手是谁”“真相是什么”，你不能直接回答。
-7. 如果信息不足，请说明“目前线索不足以判断”。
-8. 回答应简洁、有悬疑感，符合剧本杀主持人口吻。
-9. 不要直接替玩家完成最终推理。
-10. 请只输出一段主持人回答，不要输出分析过程。
-`
-
-    const userPrompt = `
-当前案件：
-${JSON.stringify(caseBackground, null, 2)}
-
-当前回合：
-${currentRound}
-
-已释放线索：
-${JSON.stringify(releasedClues, null, 2)}
-
-玩家问题：
-${playerQuestion}
-`
+    const userPrompt = buildHostUserPrompt({
+      caseBackground,
+      currentRound,
+      releasedClues,
+      playerQuestion,
+    })
 
     const response = await deepseek.chat.completions.create({
       model: 'deepseek-chat',
@@ -387,6 +367,99 @@ ${playerQuestion}
   }
 })
 
+app.post('/api/generate-script', async (req, res) => {
+  try {
+    const {
+      theme = '校园悬疑',
+      playerCount = 4,
+      difficulty = '普通',
+    } = req.body
+
+    if (!process.env.DEEPSEEK_API_KEY) {
+      return res.status(500).json({
+        error: 'DEEPSEEK_API_KEY is not configured',
+      })
+    }
+
+    const deepseek = createDeepSeekClient()
+
+    const systemPrompt = buildScriptGenerationSystemPrompt()
+
+    const userPrompt = buildScriptGenerationUserPrompt({
+      theme,
+      playerCount,
+      difficulty,
+    })
+
+    const response = await deepseek.chat.completions.create({
+      model: 'deepseek-chat',
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt,
+        },
+        {
+          role: 'user',
+          content: userPrompt,
+        },
+      ],
+      temperature: 0.8,
+    })
+
+    const content = response.choices?.[0]?.message?.content
+
+    if (!content) {
+      return res.status(500).json({
+        error: 'DeepSeek returned empty script response',
+      })
+    }
+
+    const cleanedContent = content
+      .replace(/^```json\s*/i, '')
+      .replace(/^```\s*/i, '')
+      .replace(/```$/i, '')
+      .trim()
+
+    let script
+
+    try {
+      script = JSON.parse(cleanedContent)
+    } catch (parseError) {
+      console.error('Script JSON parse error:', parseError)
+
+      return res.status(500).json({
+        error: 'Failed to parse DeepSeek script JSON',
+        raw: content,
+      })
+    }
+
+    script.theme = theme
+    script.playerCount = Number(playerCount)
+    script.difficulty = difficulty
+
+    const characterNames = script.characters?.map((character) => character.name) || []
+    const murderer = script.truth?.murderer
+
+    if (!murderer || !characterNames.includes(murderer)) {
+      return res.status(500).json({
+        error: 'Generated script failed consistency check: murderer is not in characters',
+        raw: script,
+      })
+    }
+
+    res.json({
+      script,
+    })
+  } catch (error) {
+    console.error('Script generation error:', error)
+
+    res.status(500).json({
+      error: 'Failed to generate script',
+      detail: error.message,
+    })
+  }
+})
+
 app.post('/api/review-reasoning', async (req, res) => {
   try {
     const { playerReasoning, truth, clues } = req.body
@@ -411,81 +484,13 @@ app.post('/api/review-reasoning', async (req, res) => {
 
     const deepseek = createDeepSeekClient()
 
-    const systemPrompt = `
-你是一个严谨的剧本杀推理复盘分析助手。
+    const systemPrompt = buildReviewSystemPrompt()
 
-你的任务是根据玩家的最终推理、案件真相和全部线索，生成结构化复盘结果。
-
-非常重要：
-玩家推理字段 playerReasoning 一定包含玩家输入的推理文本。
-只要 playerReasoning 不为空，就绝对不能判断为“未参与推理”。
-如果玩家指出了真凶、动机、时间线或现场证据，必须识别并加分。
-
-评分规则：
-1. 如果玩家明确指出真正凶手，加 30 分。
-2. 如果玩家解释作案动机，加 20 分。
-3. 如果玩家提到财务、报销、举报、邮件等动机相关内容，加 15 到 20 分。
-4. 如果玩家提到监控、签到记录、时间线、不在场证明，加 15 到 20 分。
-5. 如果玩家提到现场证据，例如墨水、消防通道、纤维、脚印，加 15 到 20 分。
-6. 如果玩家只是猜测，没有证据链，分数应较低。
-7. 分数必须是 0 到 100 的整数。
-8. 除非 playerReasoning 为空，否则 score 不得为 0。
-
-你必须判断：
-1. 玩家是否指出真正凶手。
-2. 玩家是否解释作案动机。
-3. 玩家是否分析关键时间线。
-4. 玩家是否使用关键现场证据。
-5. 玩家遗漏了哪些重要信息。
-6. 玩家推理整体质量如何。
-
-输出要求：
-1. 复盘阶段可以揭示最终真相。
-2. 不要嘲讽玩家。
-3. 反馈要具体、清晰、可理解。
-4. 需要说明判断依据。
-5. 如果玩家推理方向错误，需要指出原因。
-6. 如果玩家推理方向正确但证据链不完整，需要指出遗漏点。
-7. 输出必须是严格 JSON。
-8. 不要输出 Markdown。
-9. 不要输出额外解释文字。
-10. 不要使用“未参与推理”作为 level，除非 playerReasoning 为空。
-
-输出 JSON 格式如下：
-{
-  "score": 80,
-  "level": "接近真相",
-  "hitPoints": ["指出真正凶手"],
-  "missedPoints": ["没有充分解释时间线"],
-  "evidenceAnalysis": [
-    {
-      "evidence": "关键证据",
-      "usedByPlayer": true,
-      "comment": "判断说明"
-    }
-  ],
-  "summary": "整体复盘总结",
-  "truthSummary": "最终真相说明"
-}
-
-level 可选值建议：
-- "推理仍不完整"
-- "发现了部分关键点"
-- "方向基本正确"
-- "接近真相"
-- "完整命中真相"
-`
-
-    const userPrompt = `
-玩家推理：
-${playerReasoning}
-
-案件真相：
-${JSON.stringify(truth, null, 2)}
-
-全部线索：
-${JSON.stringify(clues, null, 2)}
-`
+    const userPrompt = buildReviewUserPrompt({
+      playerReasoning,
+      truth,
+      clues,
+    })
 
     const response = await deepseek.chat.completions.create({
       model: 'deepseek-chat',
