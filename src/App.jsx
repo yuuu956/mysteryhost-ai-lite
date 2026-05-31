@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { mysteryCase, characters, clues, truth } from './data/mysteryCase'
 import { askAIHost } from './api/hostApi'
 import { reviewReasoningWithAI } from './api/reviewApi'
+import { generateScriptWithAI } from './api/scriptApi'
 import './App.css'
 
 function App() {
@@ -17,11 +18,67 @@ function App() {
     }
   ])
 
-  const releasedClues = clues.filter((clue) => clue.round <= currentRound)
+  const [selectedTheme, setSelectedTheme] = useState('校园悬疑')
+  const [selectedPlayerCount, setSelectedPlayerCount] = useState(4)
+  const [selectedDifficulty, setSelectedDifficulty] = useState('普通')
+
+  const [activeCase, setActiveCase] = useState(mysteryCase)
+  const [activeCharacters, setActiveCharacters] = useState(characters)
+  const [activeClues, setActiveClues] = useState(clues)
+  const [activeTruth, setActiveTruth] = useState(truth)
+
+  const [isGeneratingScript, setIsGeneratingScript] = useState(false)
+  const [scriptError, setScriptError] = useState('')
+
+  const releasedClues = activeClues.filter((clue) => clue.round <= currentRound)
 
   const handleNextRound = () => {
-    if (currentRound < clues.length) {
+    if (currentRound < activeClues.length) {
       setCurrentRound(currentRound + 1)
+    }
+  }
+
+  const handleGenerateScript = async () => {
+    setIsGeneratingScript(true)
+    setScriptError('')
+
+    try {
+      const generatedScript = await generateScriptWithAI({
+        theme: selectedTheme,
+        playerCount: selectedPlayerCount,
+        difficulty: selectedDifficulty,
+      })
+
+      setActiveCase({
+        title: generatedScript.title,
+        theme: generatedScript.theme,
+        playerCount: generatedScript.playerCount,
+        difficulty: generatedScript.difficulty,
+        background: generatedScript.background,
+        victim: generatedScript.victim,
+        location: generatedScript.location,
+        coreMystery: generatedScript.coreMystery,
+      })
+
+      setActiveCharacters(generatedScript.characters || [])
+      setActiveClues(generatedScript.clues || [])
+      setActiveTruth(generatedScript.truth || truth)
+
+      setCurrentRound(1)
+      setHostMessages([
+        {
+          role: 'host',
+          content: `新的剧本《${generatedScript.title}》已经生成。请先阅读案件背景和角色卡，再逐轮释放线索。`,
+        },
+      ])
+      setQuestion('')
+      setReasoning('')
+      setReviewResult(null)
+    } catch (error) {
+      console.error('Script generation failed:', error)
+      setScriptError('剧本生成失败，请确认后端服务和 DeepSeek API Key 是否正常。')
+    } finally {
+      setIsGeneratingScript(false)
     }
   }
 
@@ -36,7 +93,7 @@ function App() {
   
     try {
       hostReply = await askAIHost({
-        caseBackground: mysteryCase,
+        caseBackground: activeCase,
         currentRound,
         releasedClues,
         playerQuestion,
@@ -100,8 +157,8 @@ function App() {
     try {
       const aiReview = await reviewReasoningWithAI({
         playerReasoning: userReasoning,
-        truth,
-        clues,
+        truth: activeTruth,
+        clues: activeClues,
       })
 
       setReviewResult({
@@ -109,7 +166,7 @@ function App() {
         level: aiReview.level,
         mentionsMurderer:
           aiReview.hitPoints?.some((point) => point.includes('凶手')) ||
-          userReasoning.includes(truth.murderer),
+          userReasoning.includes(activeTruth.murderer),
         matchedEvidence:
           aiReview.evidenceAnalysis
             ?.filter((item) => item.usedByPlayer)
@@ -117,7 +174,7 @@ function App() {
         missedPoints: aiReview.missedPoints || [],
         truthSummary:
           aiReview.truthSummary ||
-          `最终真相：凶手是${truth.murderer}。${truth.motive}${truth.method}`,
+          `最终真相：凶手是${activeTruth.murderer}。${activeTruth.motive}${activeTruth.method}`,
         summary: aiReview.summary,
         hitPoints: aiReview.hitPoints || [],
         evidenceAnalysis: aiReview.evidenceAnalysis || [],
@@ -130,11 +187,11 @@ function App() {
       console.error('AI review failed, fallback to local rules:', error)
     }
 
-    const matchedEvidence = truth.keyEvidence.filter((evidence) =>
+    const matchedEvidence = activeTruth.keyEvidence.filter((evidence) =>
       userReasoning.includes(evidence.slice(0, 4))
     )
 
-    const mentionsMurderer = userReasoning.includes(truth.murderer)
+    const mentionsMurderer = userReasoning.includes(activeTruth.murderer)
     const mentionsMotive =
       userReasoning.includes('报销') ||
       userReasoning.includes('举报') ||
@@ -188,7 +245,7 @@ function App() {
       mentionsMurderer,
       matchedEvidence,
       missedPoints,
-      truthSummary: `最终真相：凶手是${truth.murderer}。${truth.motive}${truth.method}`,
+      truthSummary: `最终真相：凶手是${activeTruth.murderer}。${activeTruth.motive}${activeTruth.method}`,
       fallbackUsed: true,
       fallbackReason: 'frontend_local_fallback',
     })
@@ -212,9 +269,54 @@ function App() {
             <span>推理复盘</span>
           </div>
 
-          <div className="hero-actions">
-            <button className="primary-btn">开始生成剧本</button>
-            <button className="secondary-btn">查看 Demo</button>
+          <div className="script-generator-panel">
+            <div className="generator-field">
+              <label>剧本主题</label>
+              <select
+                value={selectedTheme}
+                onChange={(event) => setSelectedTheme(event.target.value)}
+              >
+                <option value="校园悬疑">校园悬疑</option>
+                <option value="古风权谋">古风权谋</option>
+                <option value="赛博朋克">赛博朋克</option>
+                <option value="密室推理">密室推理</option>
+                <option value="民国旧案">民国旧案</option>
+              </select>
+            </div>
+
+            <div className="generator-field">
+              <label>玩家人数</label>
+              <select
+                value={selectedPlayerCount}
+                onChange={(event) => setSelectedPlayerCount(Number(event.target.value))}
+              >
+                <option value={3}>3 人</option>
+                <option value={4}>4 人</option>
+                <option value={5}>5 人</option>
+              </select>
+            </div>
+
+            <div className="generator-field">
+              <label>难度</label>
+              <select
+                value={selectedDifficulty}
+                onChange={(event) => setSelectedDifficulty(event.target.value)}
+              >
+                <option value="简单">简单</option>
+                <option value="普通">普通</option>
+                <option value="困难">困难</option>
+              </select>
+            </div>
+
+            <button
+              className="primary-action"
+              onClick={handleGenerateScript}
+              disabled={isGeneratingScript}
+            >
+              {isGeneratingScript ? 'AI 正在生成剧本...' : '开始生成剧本'}
+            </button>
+
+            {scriptError && <p className="script-error">{scriptError}</p>}
           </div>
         </div>
 
@@ -261,32 +363,32 @@ function App() {
 
           <div className="case-content">
             <div className="case-meta">
-              <span>{mysteryCase.theme}</span>
-              <span>{mysteryCase.playerCount} 人局</span>
-              <span>难度：{mysteryCase.difficulty}</span>
+              <span>{activeCase.theme}</span>
+              <span>{activeCase.playerCount} 人局</span>
+              <span>难度：{activeCase.difficulty}</span>
             </div>
 
-            <h3>{mysteryCase.title}</h3>
+            <h3>{activeCase.title}</h3>
 
-            <p>{mysteryCase.background}</p>
+            <p>{activeCase.background}</p>
 
             <div className="case-grid">
               <div>
                 <strong>死者</strong>
                 <p>
-                  {mysteryCase.victim.name}，{mysteryCase.victim.identity}，
-                  {mysteryCase.victim.age} 岁。
+                  {activeCase.victim.name}，{activeCase.victim.identity}，
+                  {activeCase.victim.age} 岁。
                 </p>
               </div>
 
               <div>
                 <strong>案发地点</strong>
-                <p>{mysteryCase.location}</p>
+                <p>{activeCase.location}</p>
               </div>
 
               <div>
                 <strong>核心谜题</strong>
-                <p>{mysteryCase.coreMystery}</p>
+                <p>{activeCase.coreMystery}</p>
               </div>
             </div>
           </div>
@@ -299,7 +401,7 @@ function App() {
           </div>
 
           <div className="character-list">
-            {characters.map((character) => (
+            {activeCharacters.map((character) => (
               <article className="character-card" key={character.id}>
                 <div className="character-top">
                   <div className="character-avatar">{character.avatar}</div>
@@ -343,9 +445,9 @@ function App() {
             <button
               className="next-round-btn"
               onClick={handleNextRound}
-              disabled={currentRound >= clues.length}
+              disabled={currentRound >= activeClues.length}
             >
-              {currentRound >= clues.length ? '线索已全部释放' : '释放下一轮线索'}
+              {currentRound >= activeClues.length ? '线索已全部释放' : '释放下一轮线索'}
             </button>
           </div>
 
