@@ -7,7 +7,7 @@
 
 ## 项目截图
 
-![MysteryHost AI Lite Demo](./assets/screenshots/demo-homepage.png)
+![MysteryHost AI Lite Demo](./assets/screenshots/homepage.png)
 
 
 MysteryHost AI Lite 是一个文字版 AI 剧本杀主持人原型项目。
